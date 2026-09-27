@@ -12,6 +12,8 @@
 @property --np-c1     { syntax: "<color>"; inherits: true; initial-value: #6d5dfc; }
 @property --np-c2     { syntax: "<color>"; inherits: true; initial-value: #1f3a8a; }
 @property --np-c3     { syntax: "<color>"; inherits: true; initial-value: #d65db1; }
+/* Karaoke fill level, animated by CSS (no per-frame DOM writes). */
+@property --f         { syntax: "<percentage>"; inherits: false; initial-value: 0%; }
 
 :root {
   --cover-strength: .92;
@@ -1588,6 +1590,9 @@ html[data-nebula-lyrics] .playback-bar .x-progressBar-fillColor::before {
   height: 100%;
   min-height: 0;
   overflow: hidden;
+  /* Line changes and held-word margins relayout only this box, not the panel
+     Spotify's scrollbars re-measure on every mutation. */
+  contain: strict;
   -webkit-mask-image: linear-gradient(to bottom, transparent, #000 14%, #000 78%, transparent);
           mask-image: linear-gradient(to bottom, transparent, #000 14%, #000 78%, transparent);
 }
@@ -1662,14 +1667,14 @@ html[data-nebula-karaoke="off"] .nl-line.is-interlude.is-active span:nth-child(3
 .nl-line.is-interlude.is-active {
   animation: nl-breathe 2.4s ease-in-out infinite;
 }
-.nl-line.is-interlude span.is-now {
+.nl-line.is-interlude.is-karaoke span {
   opacity: 1;
-  background: linear-gradient(to top, #fff var(--f, 0%), rgba(255, 255, 255, .28) var(--f, 0%));
+  background: linear-gradient(to top, #fff var(--f), rgba(255, 255, 255, .28) var(--f));
+  animation: nl-dot-fill var(--wd) linear var(--ws) both;
 }
-.nl-line.is-interlude span.is-sung {
-  opacity: 1;
-  box-shadow: 0 0 12px rgba(255, 255, 255, .55);
-  transition: box-shadow .4s ease;
+@keyframes nl-dot-fill {
+  from { --f: 0%; box-shadow: 0 0 12px rgba(255, 255, 255, 0); }
+  to   { --f: 100%; box-shadow: 0 0 12px rgba(255, 255, 255, .55); }
 }
 @keyframes nl-breathe {
   50% { scale: 1.12; }
@@ -1712,43 +1717,49 @@ html[data-nebula-karaoke="off"] .nl-line.is-interlude.is-active {
 
 .nl-word {
   display: inline-block;
-  transition:
-    translate .4s cubic-bezier(.22, 1, .36, 1),
-    scale .5s cubic-bezier(.22, 1, .36, 1),
-    margin .5s cubic-bezier(.22, 1, .36, 1);
   transform-origin: center 70%;
 }
-/* background-clip: text is unreliable on inline elements inside composited layers. */
-.nl-ch {
+/* Each letter (or word) fills from its delay (--ws) over its duration (--wd). */
+.nl-line.is-karaoke .nl-ch {
   display: inline-block;
-  color: rgba(255, 255, 255, .32);
   white-space: pre;
-  transition: text-shadow .3s ease;
-}
-.nl-ch.is-now {
   color: transparent;
-  background: linear-gradient(90deg, #fff var(--f, 0%), rgba(255, 255, 255, .32) calc(var(--f, 0%) + 22%));
+  background: linear-gradient(90deg, #fff calc(var(--f) - 22%), rgba(255, 255, 255, .32) var(--f));
   -webkit-background-clip: text;
           background-clip: text;
+  animation: nl-fill var(--wd) linear var(--ws) both;
 }
-.nl-ch.is-sung {
-  color: #fff;
-  text-shadow: 0 0 22px rgba(255, 255, 255, .35);
+@keyframes nl-fill {
+  from { --f: 0%; text-shadow: 0 0 22px rgba(255, 255, 255, 0); }
+  to   { --f: 122%; text-shadow: 0 0 22px rgba(255, 255, 255, .35); }
 }
-.nl-word.is-singing,
-.nl-word:has(.is-sung) {
-  translate: 0 -3px;
+/* Words lift as they start; held words zoom until the next word starts (--wh)
+   and get room on both sides, since scale alone does not reflow. */
+.nl-line.is-karaoke .nl-word {
+  animation: nl-lift .4s cubic-bezier(.22, 1, .36, 1) var(--ws) both;
 }
-/* scale does not reflow, so the held word also gets room on both sides */
-.nl-word.is-held.is-singing {
-  scale: 1.07;
-  margin-inline: .14em;
+.nl-line.is-karaoke .nl-word.is-held {
+  animation:
+    nl-lift .4s cubic-bezier(.22, 1, .36, 1) var(--ws) both,
+    nl-held var(--wh) ease-in-out var(--ws) both;
 }
-.nl-word.is-held .nl-ch.is-sung {
-  text-shadow: 0 0 26px rgba(255, 255, 255, .75);
+.nl-line.is-karaoke .nl-word.is-held .nl-ch {
+  animation-name: nl-fill-held;
 }
-html[data-np-state="paused"] .nl-word {
-  transition: none;
+@keyframes nl-lift {
+  from { translate: 0 0; }
+  to   { translate: 0 -3px; }
+}
+@keyframes nl-held {
+  0%, 100% { scale: 1; margin-inline: 0; }
+  18%, 82% { scale: 1.07; margin-inline: .14em; }
+}
+@keyframes nl-fill-held {
+  from { --f: 0%; text-shadow: 0 0 26px rgba(255, 255, 255, 0); }
+  to   { --f: 122%; text-shadow: 0 0 26px rgba(255, 255, 255, .75); }
+}
+html[data-np-state="paused"] .nl-line.is-karaoke :is(.nl-ch, .nl-word, span) {
+  animation-play-state: paused;
 }
 
 .nebula-lyrics-card {
@@ -1886,16 +1897,6 @@ html[data-nebula-npv] .Root__right-sidebar .main-nowPlayingView-section {
 .nebula-ring .nr-progress {
   stroke-dasharray: 100 100;
   stroke-dashoffset: 100;
-  transition: stroke-dashoffset 1s linear;
-}
-html[data-nebula-fx="full"] .nebula-np .nebula-ring {
-  animation: ring-spin 60s linear infinite;
-}
-html[data-nebula-fx="full"][data-np-state="paused"] .nebula-np .nebula-ring {
-  animation-play-state: paused;
-}
-@keyframes ring-spin {
-  to { rotate: 360deg; }
 }
 
 .nnp-row {
@@ -1992,9 +1993,6 @@ html[data-nebula-fx="full"][data-np-state="paused"] .nebula-np .nebula-ring {
 }
 .nebula-home-hero.no-avatar .nhh-avatar img {
   background: var(--liquid-bg);
-}
-html[data-nebula-fx="full"] .nhh-avatar .nebula-ring {
-  animation: ring-spin 40s linear infinite;
 }
 .nhh-greet {
   color: var(--ink-2);

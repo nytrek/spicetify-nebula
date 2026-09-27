@@ -132,7 +132,7 @@ Open your **profile menu → Nebula settings**. Changes apply instantly and are 
 | Lyrics | Nebula lyrics | On · Off | On |
 | | Karaoke | By letter · By word · Off | By letter |
 
-Everything is on by default. **Dynamic** background adds the moving cover, breathing aurora and twinkling stars, and **Extra effects** adds a breathing halo under the player, a spinning progress ring and a slow zoom on artist photos. On older or low-power machines, set Background to *Static* and turn Extra effects off.
+Everything is on by default. **Dynamic** background adds the moving cover, breathing aurora and twinkling stars, and **Extra effects** adds a breathing halo under the player and a slow zoom on artist photos. On older or low-power machines, set Background to *Static* and turn Extra effects off.
 
 <br>
 

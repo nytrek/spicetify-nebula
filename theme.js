@@ -56,7 +56,7 @@
       bg: "Background", bgHint: "Dynamic: moving cover, breathing aurora and twinkling stars (like v1).",
       bgStatic: "Static", bgDynamic: "Dynamic",
       meteors: "Shooting stars", meteorsHint: "Now and then a star crosses the screen.",
-      fx: "Extra effects", fxHint: "Breathing halo, spinning ring, slow zoom on artist photos.",
+      fx: "Extra effects", fxHint: "Breathing halo and slow zoom on artist photos.",
       npv: "Now playing", npvHint: "Cover with progress ring, or Spotify's video/canvas when the song has one.",
       npvRing: "Cover + ring", npvVideo: "Video / canvas",
       useLyrics: "Nebula lyrics", useLyricsHint: "Turn off to use Spotify's or another extension's lyrics.",
@@ -79,7 +79,7 @@
       bg: "Fondo", bgHint: "Dinámico: portada en movimiento, aurora que respira y estrellas que titilan (como la v1).",
       bgStatic: "Estático", bgDynamic: "Dinámico",
       meteors: "Estrellas fugaces", meteorsHint: "De vez en cuando una estrella cruza la pantalla.",
-      fx: "Efectos extra", fxHint: "Halo que respira, anillo que gira, zoom lento en fotos de artista.",
+      fx: "Efectos extra", fxHint: "Halo que respira y zoom lento en fotos de artista.",
       npv: "Reproduciendo", npvHint: "Portada con anillo de progreso, o el vídeo/canvas de Spotify si la canción lo tiene.",
       npvRing: "Portada + anillo", npvVideo: "Vídeo / canvas",
       useLyrics: "Letras Nebula", useLyricsHint: "Desactívalo para usar las letras de Spotify u otra extensión.",
@@ -102,7 +102,7 @@
       bg: "Fundo", bgHint: "Dinâmico: capa em movimento, aurora pulsando e estrelas cintilando (como a v1).",
       bgStatic: "Estático", bgDynamic: "Dinâmico",
       meteors: "Estrelas cadentes", meteorsHint: "De vez em quando uma estrela cruza a tela.",
-      fx: "Efeitos extras", fxHint: "Halo pulsando, anel girando, zoom lento nas fotos de artista.",
+      fx: "Efeitos extras", fxHint: "Halo pulsando e zoom lento nas fotos de artista.",
       npv: "Tocando agora", npvHint: "Capa com anel de progresso, ou o vídeo/canvas do Spotify quando houver.",
       npvRing: "Capa + anel", npvVideo: "Vídeo / canvas",
       useLyrics: "Letras Nebula", useLyricsHint: "Desative para usar as letras do Spotify ou de outra extensão.",
@@ -263,16 +263,18 @@
   let pointer = null;
   let tiltFrame = 0;
 
+  // Per-frame values go into a <style> in <head>: Spotify's scrollbars re-measure
+  // the page on every mutation inside it, so the card itself is only touched twice.
+  const tiltSheet = document.createElement("style");
+  document.head.append(tiltSheet);
+
   const releaseCard = () => {
     if (!art) return;
     art.classList.remove("nebula-tilt");
-    art.style.transform = "";
-    art.style.removeProperty("--glare-x");
-    art.style.removeProperty("--glare-y");
+    tiltSheet.textContent = "";
     art = null;
   };
 
-  // Writes the transform on the artwork only (no variables on the card) at most once per frame.
   const tilt = () => {
     tiltFrame = 0;
     const next = pointer.target.closest?.(CARD) ?? null;
@@ -286,10 +288,9 @@
     const r = card.getBoundingClientRect();
     const x = (pointer.clientX - r.left) / r.width - 0.5;
     const y = (pointer.clientY - r.top) / r.height - 0.5;
-    art.style.transform =
-      `perspective(700px) rotateX(${(-y * 10).toFixed(2)}deg) rotateY(${(x * 12).toFixed(2)}deg)`;
-    art.style.setProperty("--glare-x", x.toFixed(3));
-    art.style.setProperty("--glare-y", y.toFixed(3));
+    tiltSheet.textContent = `.main-cardImage-imageWrapper.nebula-tilt{` +
+      `transform:perspective(700px) rotateX(${(-y * 10).toFixed(2)}deg) rotateY(${(x * 12).toFixed(2)}deg);` +
+      `--glare-x:${x.toFixed(3)};--glare-y:${y.toFixed(3)}}`;
   };
 
   document.addEventListener("pointermove", (event) => {
@@ -595,11 +596,24 @@
       q(".nnp-artist").dataset.uri = item.artists?.[0]?.uri || "";
       renderHeart();
     };
-    const progress = () => {
+    // The ring is one Web Animation over the whole song; it is only re-anchored
+    // on song changes, seeks and play/pause, never per progress tick, and it
+    // never touches the DOM (Spotify's scrollbars re-measure on every mutation).
+    let fill = null;
+    const progress = (force = false) => {
       if (!el.isConnected) return;
-      const dur = (playerDur() || 1);
-      const p = Math.min(playerPos() / dur, 1);
-      wave.style.strokeDashoffset = (100 - p * 100).toFixed(2);
+      const dur = playerDur();
+      if (!dur) return;
+      const pos = playerPos();
+      const bar = svg.querySelector(".nr-progress");
+      if (!bar) return;
+      if (!fill || fill.effect.target !== bar || fill.effect.getTiming().duration !== dur) {
+        fill?.cancel();
+        fill = bar.animate([{ strokeDashoffset: 100 }, { strokeDashoffset: 0 }], { duration: dur, fill: "both" });
+        force = true;
+      }
+      if (force || Math.abs(pos - fill.currentTime) > 1500) fill.currentTime = pos;
+      if (S.Player.data?.isPaused) fill.pause(); else fill.play();
     };
 
     heart.addEventListener("click", () => { S.Player.toggleHeart?.(); setTimeout(renderHeart, 300); });
@@ -607,8 +621,9 @@
       const id = e.currentTarget.dataset.uri?.split(":")[2];
       if (id) S.Platform.History.push(`/artist/${id}`);
     });
-    S.Player.addEventListener("songchange", render);
-    S.Player.addEventListener("onprogress", progress);
+    S.Player.addEventListener("songchange", () => { render(); progress(true); });
+    S.Player.addEventListener("onplaypause", () => progress(true));
+    S.Player.addEventListener("onprogress", () => progress());
     render();
     return { el, render, progress };
   }
@@ -621,7 +636,6 @@
     let data = null;          // { synced, lines: [{ start, end, text, words: [{ text, start, end, held }] }] }
     let trackUri = "";
     let timer = 0;
-    let raf = 0;
 
     // --- Monotonic clock
     // Never goes backwards; only jumps on real seeks, so karaoke never rewinds.
@@ -764,28 +778,15 @@
     // --- Engine
     const karaokeOn = () => settings.karaoke !== "off" && !calm();
 
-    const frame = () => {
-      raf = 0;
-      if (!views.size || !data?.synced || paused()) return;
-      const pos = now();
-      views.forEach((v) => v.tick(pos));
-      raf = requestAnimationFrame(frame);
-    };
-
+    // Line changes are timer-driven; the karaoke fill itself is pure CSS.
     function run() {
       clearTimeout(timer);
-      cancelAnimationFrame(raf);
-      raf = 0;
       if (!views.size || !data?.synced) return;
       const pos = now();
       views.forEach((v) => v.tick(pos));
       if (paused()) return;
-      if (karaokeOn()) {
-        raf = requestAnimationFrame(frame);
-      } else {
-        const next = data.lines[indexAt(pos) + 1];
-        if (next) timer = setTimeout(run, Math.max(20, next.start - pos));
-      }
+      const next = data.lines[indexAt(pos) + 1];
+      if (next) timer = setTimeout(run, Math.max(20, next.start - pos));
     }
 
     const onProgress = () => {
@@ -837,8 +838,6 @@
     const detach = (view) => {
       if (!views.delete(view) || views.size) return;
       clearTimeout(timer);
-      cancelAnimationFrame(raf);
-      raf = 0;
       S.Player.removeEventListener("songchange", loadTrack);
       S.Player.removeEventListener("onplaypause", onPlayPause);
       S.Player.removeEventListener("onprogress", onProgress);
@@ -862,11 +861,6 @@
       let current = -2;
       let manual = 0;
       let manualTimer = 0;
-      let units = [];      // [{ el, start, end, word }]
-      let cursor = 0;
-      // Estimated word ends are approximate, so the zoom lasts until the next
-      // word actually starts (or the line changes), not until the fill ends.
-      let singing = null;
 
       const place = () => {
         if (!els.length) return;
@@ -880,59 +874,64 @@
         const el = els[index];
         const line = data?.lines[index];
         if (!el || !line) return;
+        el.classList.remove("is-karaoke");
         if (line.text) {
           if (el.childElementCount) el.textContent = line.text;
           return;
         }
-        el.querySelectorAll("span").forEach((dot) => {
-          dot.classList.remove("is-now", "is-sung");
-          dot.style.removeProperty("--f");
-        });
+        el.querySelectorAll("span").forEach((dot) => dot.removeAttribute("style"));
       };
 
-      const split = (index) => {
-        units = [];
-        cursor = 0;
-        singing = null;
+      // Karaoke timing is handed to CSS once per line (delay + duration per
+      // letter/word). Spotify's scrollbars re-measure the whole panel on every
+      // DOM mutation, so nothing here may change per frame.
+      const timing = (el, start, dur, pos) => {
+        el.style.setProperty("--ws", `${Math.round(start - pos)}ms`);
+        el.style.setProperty("--wd", `${Math.max(Math.round(dur), 60)}ms`);
+      };
+
+      const split = (index, pos) => {
         const line = data?.lines[index];
         const el = els[index];
         if (!line || !el || !karaokeOn()) return;
         if (!line.text) {
           const dots = [...el.querySelectorAll("span")];
           const step = (line.end - line.start) / dots.length;
-          dots.forEach((dot, i) => units.push({ el: dot, word: el, start: line.start + step * i, end: line.start + step * (i + 1), last: false }));
+          dots.forEach((dot, i) => timing(dot, line.start + step * i, step, pos));
+          el.classList.add("is-karaoke");
           return;
         }
         if (!line.words.length) return;
         const byLetter = settings.karaoke === "letter";
-        el.textContent = "";
+        const sung = line.words.filter((w) => !w.space);
+        const lineEnd = data.lines[index + 1]?.start ?? line.end;
+        const frag = document.createDocumentFragment();
         line.words.forEach((w) => {
-          if (w.space) { el.append(document.createTextNode(w.text)); return; }
+          if (w.space) { frag.append(document.createTextNode(w.text)); return; }
           const word = document.createElement("span");
           word.className = "nl-word";
+          // held words stay zoomed until the next word starts (or the line ends)
+          const nextStart = sung[sung.indexOf(w) + 1]?.start ?? lineEnd;
+          word.style.setProperty("--ws", `${Math.round(w.start - pos)}ms`);
+          word.style.setProperty("--wh", `${Math.max(Math.round(nextStart - w.start), 300)}ms`);
           if (w.held) word.classList.add("is-held");
-          if (byLetter) {
-            const chars = [...w.text];
-            const step = (w.end - w.start) / chars.length;
-            chars.forEach((ch, i) => {
-              const c = document.createElement("span");
-              c.className = "nl-ch";
-              c.textContent = ch;
-              word.append(c);
-              units.push({ el: c, word, start: w.start + step * i, end: w.start + step * (i + 1), last: i === chars.length - 1 });
-            });
-          } else {
+          const chars = byLetter ? [...w.text] : [w.text];
+          const step = (w.end - w.start) / chars.length;
+          chars.forEach((ch, i) => {
             const c = document.createElement("span");
             c.className = "nl-ch";
-            c.textContent = w.text;
+            c.textContent = ch;
+            timing(c, w.start + step * i, step, pos);
             word.append(c);
-            units.push({ el: c, word, start: w.start, end: w.end, last: true });
-          }
-          el.append(word);
+          });
+          frag.append(word);
         });
+        el.textContent = "";
+        el.append(frag);
+        el.classList.add("is-karaoke");
       };
 
-      const setActive = (index) => {
+      const setActive = (index, pos) => {
         if (current >= 0 && current !== index) plain(current);
         current = index;
         els.forEach((el, i) => {
@@ -940,27 +939,8 @@
           el.classList.toggle("is-past", i < index);
           el.style.setProperty("--nl-dist", Math.min(Math.abs(i - index), 4));
         });
-        split(index);
+        split(index, pos);
         if (manual === 0) place();
-      };
-
-      const fill = (pos) => {
-        while (cursor < units.length && units[cursor].end <= pos) {
-          const u = units[cursor];
-          u.el.classList.remove("is-now");
-          u.el.style.removeProperty("--f");
-          u.el.classList.add("is-sung");
-          cursor++;
-        }
-        const u = units[cursor];
-        if (!u || pos < u.start) return;
-        if (u.word !== singing) {
-          singing?.classList.remove("is-singing");
-          singing = u.word;
-          singing.classList.add("is-singing");
-        }
-        u.el.classList.add("is-now");
-        u.el.style.setProperty("--f", `${Math.round(((pos - u.start) / (u.end - u.start)) * 100)}%`);
       };
 
       viewport.addEventListener("wheel", (e) => {
@@ -984,14 +964,12 @@
           list.textContent = "";
           els = [];
           current = -2;
-          units = [];
           status.textContent = t("loading");
         },
         render(d) {
           list.textContent = "";
           els = [];
           current = -2;
-          units = [];
           manual = 0;
           viewport.dataset.synced = String(!!d?.synced);
           status.textContent = d ? (d.synced ? "" : t("unsynced")) : t("none");
@@ -1017,8 +995,7 @@
         tick(pos) {
           if (!data?.synced || !els.length) return;
           const index = indexAt(pos);
-          if (index !== current) setActive(index);
-          if (units.length) fill(pos);
+          if (index !== current) setActive(index, pos);
         },
         reset() {
           if (current >= 0) plain(current);
