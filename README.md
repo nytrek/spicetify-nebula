@@ -121,6 +121,7 @@ Open your **profile menu → Nebula settings**. Changes apply instantly and are 
 | :-- | :-- | :-- | :-- |
 | Appearance | Style | Nebula · Aurora v1 | Nebula |
 | | Tone | Normal · Dark · OLED | Normal |
+| | Respect reduced motion | On · Off | Off |
 | Home | Welcome | On · Off | On |
 | | Home header | On · Off | On |
 | Background | Background | Static · Dynamic | Dynamic |

@@ -51,6 +51,7 @@
       tone: "Tone", toneHint: "How dark the background and panels are.",
       toneNormal: "Normal", toneDark: "Dark", toneBlack: "OLED",
       welcome: "Welcome", welcomeHint: "A greeting with your name when Spotify opens.",
+      calm: "Respect reduced motion", calmHint: "Turn animations off when the system asks for reduced motion.",
       homeHero: "Home header", homeHeroHint: "Your profile photo and greeting at the top of Home.",
       bg: "Background", bgHint: "Dynamic: moving cover, breathing aurora and twinkling stars (like v1).",
       bgStatic: "Static", bgDynamic: "Dynamic",
@@ -73,6 +74,7 @@
       tone: "Tono", toneHint: "Qué tan oscuros son el fondo y los paneles.",
       toneNormal: "Normal", toneDark: "Oscuro", toneBlack: "OLED",
       welcome: "Bienvenida", welcomeHint: "Un saludo con tu nombre al abrir Spotify.",
+      calm: "Respetar movimiento reducido", calmHint: "Desactiva las animaciones si el sistema pide reducir el movimiento.",
       homeHero: "Cabecera de inicio", homeHeroHint: "Tu foto de perfil y un saludo arriba en Inicio.",
       bg: "Fondo", bgHint: "Dinámico: portada en movimiento, aurora que respira y estrellas que titilan (como la v1).",
       bgStatic: "Estático", bgDynamic: "Dinámico",
@@ -95,6 +97,7 @@
       tone: "Tom", toneHint: "O quão escuros são o fundo e os painéis.",
       toneNormal: "Normal", toneDark: "Escuro", toneBlack: "OLED",
       welcome: "Boas-vindas", welcomeHint: "Uma saudação com seu nome ao abrir o Spotify.",
+      calm: "Respeitar movimento reduzido", calmHint: "Desliga as animações quando o sistema pede menos movimento.",
       homeHero: "Cabeçalho do início", homeHeroHint: "Sua foto de perfil e uma saudação no topo do Início.",
       bg: "Fundo", bgHint: "Dinâmico: capa em movimento, aurora pulsando e estrelas cintilando (como a v1).",
       bgStatic: "Estático", bgDynamic: "Dinâmico",
@@ -123,6 +126,7 @@
     lyrics: true,        // Nebula lyrics instead of Spotify's
     panelLyrics: true,   // lyrics in the right panel
     karaoke: "letter",   // "letter" | "word" | "off"
+    calm: false,         // follow the system "reduce motion" preference
   };
   const settings = (() => {
     let saved = {};
@@ -150,9 +154,13 @@
     root.dataset.nebulaBg = settings.bg;
     root.dataset.nebulaFx = settings.fx;
     root.dataset.nebulaKaraoke = settings.karaoke;
+    if (calm()) root.dataset.nebulaCalm = "";
+    else delete root.dataset.nebulaCalm;
   };
+  // Windows often reports "reduce motion" system-wide, so it only applies when the user opts in.
+  function calm() { return settings.calm && reduceMotion.matches; }
   applySettings();
-  const fullFx = () => settings.fx === "full" && !reduceMotion.matches;
+  const fullFx = () => settings.fx === "full" && !calm();
 
   // ---------- Material 3 shapes ----------
   const SVG_NS = "http://www.w3.org/2000/svg";
@@ -222,7 +230,7 @@
       setTimeout(waitForUi, 100);
       return;
     }
-    if (reduceMotion.matches || !settings.welcome) {
+    if (calm() || !settings.welcome) {
       root.dataset.nebulaReady = "";
       return;
     }
@@ -238,11 +246,11 @@
   // Spotify's IntersectionObservers busy every frame.
   const launchMeteor = () => {
     const playing = root.dataset.npState !== "paused";
-    if (settings.meteors && !reduceMotion.matches && playing && document.visibilityState === "visible") {
+    if (settings.meteors && !calm() && playing && document.visibilityState === "visible") {
       root.dataset.nebulaMeteor = Math.random() < 0.5 ? "a" : "b";
       setTimeout(() => delete root.dataset.nebulaMeteor, 1300);
     }
-    const lively = settings.bg === "dynamic" && !reduceMotion.matches;
+    const lively = settings.bg === "dynamic" && !calm();
     const wait = lively ? 8000 + Math.random() * 6000 : 20000 + Math.random() * 10000;
     setTimeout(launchMeteor, wait);
   };
@@ -285,7 +293,7 @@
   };
 
   document.addEventListener("pointermove", (event) => {
-    if (reduceMotion.matches) return;
+    if (calm()) return;
     pointer = event;
     tiltFrame ||= requestAnimationFrame(tilt);
   }, { passive: true });
@@ -370,7 +378,7 @@
     const crossfadeTo = (next) => {
       const previous = root.style.getPropertyValue("--np-ambient");
       root.style.setProperty("--np-ambient", next);
-      if (!previous || reduceMotion.matches) {
+      if (!previous || calm()) {
         root.style.setProperty("--np-ambient-prev", next);
         return;
       }
@@ -494,6 +502,7 @@
     section(t("secLook"));
     row(t("style"), t("styleHint"), choice("style", [["nebula", t("styleNebula")], ["aurora", t("styleAurora")]]));
     row(t("tone"), t("toneHint"), choice("tone", [["normal", t("toneNormal")], ["dark", t("toneDark")], ["black", t("toneBlack")]]));
+    row(t("calm"), t("calmHint"), toggle("calm"));
     section(t("secHome"));
     row(t("welcome"), t("welcomeHint"), toggle("welcome"));
     row(t("homeHero"), t("homeHeroHint"), toggle("homeHero"));
@@ -749,7 +758,7 @@
     };
 
     // --- Engine
-    const karaokeOn = () => settings.karaoke !== "off" && !reduceMotion.matches;
+    const karaokeOn = () => settings.karaoke !== "off" && !calm();
 
     const frame = () => {
       raf = 0;

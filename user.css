@@ -2191,30 +2191,35 @@ html[data-nebula-style="aurora"][data-np-state="paused"] .main-nowPlayingWidget-
 }
 
 /* ---------- Reduced motion ---------- */
-@media (prefers-reduced-motion: reduce) {
-  .playback-bar .x-progressBar-fillColor::before,
-  #full-app-display #fad-progress-inner::before,
-  .main-card-imageContainerSkeleton,
-  .main-view-container [data-testid$="-page"],
-  html[data-nebula-ready] body::before,
-  html[data-nebula-ready] :is(.Root__globalNav, .Root__nav-bar, .Root__main-view, .Root__right-sidebar, .Root__now-playing-bar) {
+/* Only when "Respect reduced motion" is on and the system asks for it (set by theme.js). */
+html[data-nebula-calm] .playback-bar .x-progressBar-fillColor::before,
+html[data-nebula-calm] #full-app-display #fad-progress-inner::before,
+html[data-nebula-calm] .main-card-imageContainerSkeleton,
+html[data-nebula-calm] .main-view-container [data-testid$="-page"],
+html[data-nebula-calm][data-nebula-ready] body::before,
+html[data-nebula-calm][data-nebula-ready] :is(.Root__globalNav, .Root__nav-bar, .Root__main-view, .Root__right-sidebar, .Root__now-playing-bar) {
     animation: none;
-  }
-  #nebula-lyrics,
-  #nebula-lyrics.is-leaving,
-  .nl-line.is-interlude.is-active span,
-  html[data-nebula-bg="dynamic"] :is(body, .Root, .Root__main-view)::before,
-  html[data-nebula-bg="dynamic"] body::after,
-  html[data-nebula-fx="full"] .main-nowPlayingBar-nowPlayingBar::after {
+}
+html[data-nebula-calm] #nebula-lyrics,
+html[data-nebula-calm] #nebula-lyrics.is-leaving,
+html[data-nebula-calm] .nl-line.is-interlude.is-active span,
+html[data-nebula-calm][data-nebula-bg="dynamic"] :is(body, .Root, .Root__main-view)::before,
+html[data-nebula-calm][data-nebula-bg="dynamic"] body::after,
+html[data-nebula-calm][data-nebula-fx="full"] .main-nowPlayingBar-nowPlayingBar::after {
     animation: none;
-  }
-  .nl-line { transition: opacity .2s ease !important; }
-  .nl-word { transition: none !important; translate: none !important; scale: none !important; }
-  .nebula-ring { animation: none !important; }
-  html[data-nebula-style="aurora"] .main-nowPlayingBar-nowPlayingBar::before,
-  html[data-nebula-style="aurora"] .main-nowPlayingWidget-coverArtContainer { animation: none; }
-  .Root__main-view::after { display: none; }
-  :is(.main-card-card, .main-card-cardContainer):hover,
-  :is(.main-card-card, .main-card-cardContainer):focus-within,
-  .view-homeShortcutsGrid-shortcut:hover { transform: none; }
+}
+html[data-nebula-calm] .nl-line { transition: opacity .2s ease !important;
+}
+html[data-nebula-calm] .nl-word { transition: none !important; translate: none !important; scale: none !important;
+}
+html[data-nebula-calm] .nebula-ring { animation: none !important;
+}
+html[data-nebula-calm][data-nebula-style="aurora"] .main-nowPlayingBar-nowPlayingBar::before,
+html[data-nebula-calm][data-nebula-style="aurora"] .main-nowPlayingWidget-coverArtContainer { animation: none;
+}
+html[data-nebula-calm] .Root__main-view::after { display: none;
+}
+html[data-nebula-calm] :is(.main-card-card, .main-card-cardContainer):hover,
+html[data-nebula-calm] :is(.main-card-card, .main-card-cardContainer):focus-within,
+html[data-nebula-calm] .view-homeShortcutsGrid-shortcut:hover { transform: none;
 }
