@@ -1428,11 +1428,14 @@ html[data-nebula-fx="full"]:is([data-np-state="paused"], [data-nebula-lyrics]) .
 
 /* ---------- Nebula lyrics ---------- */
 #main {
-  transition: opacity .3s ease;
+  transition: opacity .3s ease, content-visibility .3s allow-discrete;
 }
+/* Once faded out, the app under the lyrics is skipped entirely: Spotify
+   relayouts all of it every second for the time readout. */
 html[data-nebula-lyrics] #main {
   opacity: 0;
   pointer-events: none;
+  content-visibility: hidden;
 }
 html[data-nebula-lyrics] .playback-bar .x-progressBar-fillColor::before {
   animation-play-state: paused;
@@ -1673,8 +1676,8 @@ html[data-nebula-karaoke="off"] .nl-line.is-interlude.is-active span:nth-child(3
   animation: nl-dot-fill var(--wd) linear var(--ws) both;
 }
 @keyframes nl-dot-fill {
-  from { --f: 0%; box-shadow: 0 0 12px rgba(255, 255, 255, 0); }
-  to   { --f: 100%; box-shadow: 0 0 12px rgba(255, 255, 255, .55); }
+  from { --f: 0%; }
+  to   { --f: 100%; }
 }
 @keyframes nl-breathe {
   50% { scale: 1.12; }
@@ -1719,7 +1722,9 @@ html[data-nebula-karaoke="off"] .nl-line.is-interlude.is-active {
   display: inline-block;
   transform-origin: center 70%;
 }
-/* Each letter (or word) fills from its delay (--ws) over its duration (--wd). */
+/* Each letter (or word) fills from its delay (--ws) over its duration (--wd).
+   Only the custom property animates: text-shadow or margins here would
+   relayout the whole app on every frame. */
 .nl-line.is-karaoke .nl-ch {
   display: inline-block;
   white-space: pre;
@@ -1730,35 +1735,49 @@ html[data-nebula-karaoke="off"] .nl-line.is-interlude.is-active {
   animation: nl-fill var(--wd) linear var(--ws) both;
 }
 @keyframes nl-fill {
-  from { --f: 0%; text-shadow: 0 0 22px rgba(255, 255, 255, 0); }
-  to   { --f: 122%; text-shadow: 0 0 22px rgba(255, 255, 255, .35); }
+  from { --f: 0%; }
+  to   { --f: 122%; }
 }
-/* Words lift as they start; held words zoom until the next word starts (--wh)
-   and get room on both sides, since scale alone does not reflow. */
+/* The glow is a painted copy of the word that only fades in (opacity). */
 .nl-line.is-karaoke .nl-word {
+  position: relative;
   animation: nl-lift .4s cubic-bezier(.22, 1, .36, 1) var(--ws) both;
 }
+.nl-line.is-karaoke .nl-word::after {
+  content: attr(data-t);
+  position: absolute;
+  inset: 0;
+  white-space: pre;
+  color: transparent;
+  text-shadow: 0 0 22px rgba(255, 255, 255, .35);
+  pointer-events: none;
+  animation: nl-glow var(--wh) ease-out var(--ws) both;
+}
+/* Held words zoom until the next word starts (--wh). Their extra room is
+   static for the whole line, since scale alone does not reflow. */
 .nl-line.is-karaoke .nl-word.is-held {
+  margin-inline: .14em;
   animation:
     nl-lift .4s cubic-bezier(.22, 1, .36, 1) var(--ws) both,
     nl-held var(--wh) ease-in-out var(--ws) both;
 }
-.nl-line.is-karaoke .nl-word.is-held .nl-ch {
-  animation-name: nl-fill-held;
+.nl-line.is-karaoke .nl-word.is-held::after {
+  text-shadow: 0 0 26px rgba(255, 255, 255, .75);
 }
 @keyframes nl-lift {
   from { translate: 0 0; }
   to   { translate: 0 -3px; }
 }
 @keyframes nl-held {
-  0%, 100% { scale: 1; margin-inline: 0; }
-  18%, 82% { scale: 1.07; margin-inline: .14em; }
+  0%, 100% { scale: 1; }
+  18%, 82% { scale: 1.07; }
 }
-@keyframes nl-fill-held {
-  from { --f: 0%; text-shadow: 0 0 26px rgba(255, 255, 255, 0); }
-  to   { --f: 122%; text-shadow: 0 0 26px rgba(255, 255, 255, .75); }
+@keyframes nl-glow {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
-html[data-np-state="paused"] .nl-line.is-karaoke :is(.nl-ch, .nl-word, span) {
+html[data-np-state="paused"] .nl-line.is-karaoke :is(.nl-ch, .nl-word, span),
+html[data-np-state="paused"] .nl-line.is-karaoke .nl-word::after {
   animation-play-state: paused;
 }
 

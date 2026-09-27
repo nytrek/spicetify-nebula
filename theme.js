@@ -915,6 +915,7 @@
           word.style.setProperty("--ws", `${Math.round(w.start - pos)}ms`);
           word.style.setProperty("--wh", `${Math.max(Math.round(nextStart - w.start), 300)}ms`);
           if (w.held) word.classList.add("is-held");
+          word.dataset.t = w.text;
           const chars = byLetter ? [...w.text] : [w.text];
           const step = (w.end - w.start) / chars.length;
           chars.forEach((ch, i) => {
