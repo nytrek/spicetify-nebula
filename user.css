@@ -1151,7 +1151,7 @@ html[data-np-state="paused"] .main-nowPlayingBar-nowPlayingBar::after {
   to { opacity: 1; }
 }
 
-html:not([data-nebula-ready]) :is(.Root__globalNav, .Root__nav-bar, .Root__main-view, .Root__right-sidebar, .Root__now-playing-bar) {
+html[data-nebula-boot]:not([data-nebula-ready]) :is(.Root__globalNav, .Root__nav-bar, .Root__main-view, .Root__right-sidebar, .Root__now-playing-bar) {
   opacity: 0;
   animation: reveal-failsafe .4s ease 5s forwards;
 }

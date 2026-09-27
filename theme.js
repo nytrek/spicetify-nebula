@@ -3,6 +3,12 @@
 // attributes on <html>, and adds the welcome screen, card tilt, settings and lyrics.
 (function nebula() {
   const root = document.documentElement;
+  // Tells the CSS the script is running; without it the UI is never hidden.
+  root.dataset.nebulaBoot = "";
+
+  const safe = (name, fn) => {
+    try { return fn(); } catch (err) { console.warn(`[Nebula] ${name} failed:`, err); }
+  };
   const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)");
 
   // ---------- Locale ----------
@@ -206,8 +212,9 @@
     setTimeout(() => el.remove(), 3000);
   };
 
+  const uiWaitStart = Date.now();
   (function waitForUi() {
-    if (!document.querySelector(".Root__main-view .main-view-container")) {
+    if (!document.querySelector(".Root__main-view") && Date.now() - uiWaitStart < 10000) {
       setTimeout(waitForUi, 100);
       return;
     }
@@ -283,10 +290,27 @@
   // ---------- Spicetify-dependent setup ----------
   (function boot() {
     const S = window.Spicetify;
-    if (!S?.Player?.addEventListener || !S.Player.data || !S.Platform) {
+    // Player.data only exists once something has played, so it is not required here.
+    if (!S?.Player?.addEventListener || !S.Platform) {
       setTimeout(boot, 300);
       return;
     }
+
+    // --- Settings: profile menu entry, plus Ctrl+Alt+N as a fallback
+    // Registering before the UI is painted is silently lost, so wait for it.
+    (function registerSettings(tries = 0) {
+      if (!S.Menu?.Item || !S.PopupModal?.display || !document.querySelector(".Root__main-view")) {
+        if (tries < 120) setTimeout(() => registerSettings(tries + 1), 500);
+        return;
+      }
+      safe("settings menu", () => new S.Menu.Item(t("settings"), false, () => openSettings(S)).register());
+    })();
+    document.addEventListener("keydown", (e) => {
+      if (e.ctrlKey && e.altKey && e.key.toLowerCase() === "n" && S.PopupModal?.display) {
+        e.preventDefault();
+        openSettings(S);
+      }
+    });
 
     const setVar = (name, value) => value && root.style.setProperty(name, value);
 
@@ -387,33 +411,24 @@
 
     S.Player.addEventListener("songchange", applyTrack);
     S.Player.addEventListener("onplaypause", applyState);
-    applyTrack();
-    applyState();
+    safe("cover", applyTrack);
+    safe("state", applyState);
 
     // --- Home header
-    createHomeHero(S);
+    safe("home header", () => createHomeHero(S));
 
     // --- Lyrics and Now Playing panel
-    const hero = createNowPlaying(S, { imageOf, t });
-    const lyrics = createLyrics(S, { imageOf, t, fullFx, settings, settingListeners, hero });
+    const hero = safe("now playing", () => createNowPlaying(S, { imageOf, t }));
+    const lyrics = hero && safe("lyrics", () => createLyrics(S, { imageOf, t, fullFx, settings, settingListeners, hero }));
 
     // Capture phase, before React handles Spotify's own lyrics button.
     document.addEventListener("click", (e) => {
-      if (!settings.lyrics) return;
+      if (!settings.lyrics || !lyrics) return;
       if (!e.target.closest?.('[data-testid="lyrics-button"]')) return;
       e.preventDefault();
       e.stopPropagation();
       lyrics.toggle();
     }, true);
-
-    // --- Settings entry in the profile menu
-    (function registerSettings() {
-      if (!S.Menu?.Item || !S.PopupModal?.display) {
-        setTimeout(registerSettings, 500);
-        return;
-      }
-      new S.Menu.Item(t("settings"), false, () => openSettings(S)).register();
-    })();
   })();
 
   function openSettings(S) {
