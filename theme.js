@@ -676,19 +676,40 @@
       return out;
     };
 
-    const fetchLyrics = async (uri) => {
+    const LYRICS_HOST = "https://spclient.wg.spotify.com/color-lyrics/v2";
+
+    // Same request Spotify's own lyrics use (authenticated transport, cover in the path).
+    const nativeLyrics = async (id, image) => {
+      const res = await S.Platform.RequestBuilder.build()
+        .withHost(LYRICS_HOST)
+        .withPath(`/track/${encodeURIComponent(id)}/image/${encodeURIComponent(image)}`)
+        .withQueryParameters({ format: "json", vocalRemoval: false })
+        .withEndpointIdentifier("/track/{trackId}")
+        .send();
+      if (res?.status === 404) return { missing: true };
+      return res?.body;
+    };
+    // Fallback for clients without RequestBuilder.
+    const cosmosLyrics = (id) =>
+      S.CosmosAsync.get(`${LYRICS_HOST}/track/${id}?format=json&vocalRemoval=false&market=from_token`, null, { "app-platform": "WebPlayer" });
+
+    const fetchLyrics = async (item) => {
+      const uri = item?.uri;
       if (cache.has(uri)) return cache.get(uri);
       const id = uri?.split(":")[2];
       if (!id || !uri.startsWith("spotify:track:")) return null;
-      const url = `https://spclient.wg.spotify.com/color-lyrics/v2/track/${id}?format=json&vocalRemoval=false&market=from_token`;
-      // The desktop clients differ in which headers they accept, so try both.
+      const m = item.metadata ?? {};
+      const image = m.image_xlarge_url || m.image_large_url || m.image_url || "";
       let res = null;
       let failed = true;
-      for (const headers of [undefined, { "app-platform": "WebPlayer" }]) {
+      const sources = [];
+      if (S.Platform?.RequestBuilder?.build) sources.push(() => nativeLyrics(id, image));
+      sources.push(() => cosmosLyrics(id));
+      for (const source of sources) {
         try {
-          res = await S.CosmosAsync.get(url, null, headers);
+          res = await source();
           failed = false;
-          if (res?.lyrics) break;
+          if (res?.lyrics || res?.missing) break;
         } catch (err) {
           // 404 means the track has no lyrics; anything else is worth retrying later.
           if (err?.status === 404 || /404/.test(String(err?.message ?? err))) failed = false;
@@ -776,7 +797,7 @@
       data = null;
       resync(true);
       views.forEach((v) => { v.meta?.(item); v.loading(); });
-      const result = await fetchLyrics(item.uri);
+      const result = await fetchLyrics(item);
       if (trackUri !== item.uri || !views.size) return;
       data = result;
       views.forEach((v) => v.render(data));
