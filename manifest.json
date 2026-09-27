@@ -1,0 +1,12 @@
+[
+  {
+    "name": "Nebula",
+    "description": "A glass theme that turns the album cover into light: snake progress bars, Apple Music style karaoke lyrics, Material 3 touches and a full settings panel.",
+    "preview": "assets/preview.png",
+    "readme": "README.md",
+    "usercss": "user.css",
+    "schemes": "color.ini",
+    "include": ["theme.js"],
+    "tags": ["dark", "glass", "lyrics", "animated"]
+  }
+]
