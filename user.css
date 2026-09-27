@@ -1,0 +1,511 @@
+/*
+ * Nebula: a glass theme for Spicetify.
+ * Pairs with theme.js (ambient cover and accent color).
+ */
+
+@property --np-accent {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #b98cff;
+}
+
+:root {
+  --np-accent: #b98cff;
+  transition: --np-accent 900ms ease;
+
+  --accent:        color-mix(in oklab, var(--np-accent) 72%, #fff);
+  --accent-strong: color-mix(in oklab, var(--np-accent) 85%, #fff);
+  --accent-soft:   color-mix(in oklab, var(--np-accent) 18%, transparent);
+  --accent-glow:   color-mix(in oklab, var(--np-accent) 50%, transparent);
+
+  --ink:        #f4f0ff;
+  --ink-2:      #b8aed0;
+  --ink-3:      #7f7699;
+  --void:       #06030d;
+
+  --glass:        rgba(12, 8, 26, .46);
+  --glass-strong: rgba(18, 12, 34, .74);
+  --tint-1:       rgba(230, 215, 255, .06);
+  --tint-2:       rgba(230, 215, 255, .10);
+  --tint-3:       rgba(230, 215, 255, .16);
+  --hairline:     rgba(255, 255, 255, .07);
+  --hairline-2:   rgba(255, 255, 255, .12);
+
+  --r-panel: 14px;
+  --r-item:  8px;
+  --r-art:   10px;
+
+  --ease-out:    cubic-bezier(.2, .8, .2, 1);
+  --ease-spring: cubic-bezier(.34, 1.4, .64, 1);
+
+  --panel-edge:
+    inset 0 0 0 1px var(--hairline),
+    inset 0 1px 0 rgba(255, 255, 255, .05);
+
+  --spice-text: #f4f0ff;               --spice-rgb-text: 244,240,255;
+  --spice-subtext: #b8aed0;            --spice-rgb-subtext: 184,174,208;
+  --spice-main: #0d0819;               --spice-rgb-main: 13,8,25;
+  --spice-main-elevated: #1a1230;      --spice-rgb-main-elevated: 26,18,48;
+  --spice-highlight: #231a3d;          --spice-rgb-highlight: 35,26,61;
+  --spice-highlight-elevated: #2c2249; --spice-rgb-highlight-elevated: 44,34,73;
+  --spice-sidebar: #0a0614;            --spice-rgb-sidebar: 10,6,20;
+  --spice-player: #160f2a;             --spice-rgb-player: 22,15,42;
+  --spice-card: #1c1433;               --spice-rgb-card: 28,20,51;
+  --spice-shadow: #000000;             --spice-rgb-shadow: 0,0,0;
+  --spice-selected-row: #c9b6ff;       --spice-rgb-selected-row: 201,182,255;
+  --spice-button: #c4a3ff;             --spice-rgb-button: 196,163,255;
+  --spice-button-active: #d9c4ff;      --spice-rgb-button-active: 217,196,255;
+  --spice-button-disabled: #5d5474;    --spice-rgb-button-disabled: 93,84,116;
+  --spice-tab-active: #2a2044;         --spice-rgb-tab-active: 42,32,68;
+  --spice-notification: #7c5cff;       --spice-rgb-notification: 124,92,255;
+  --spice-notification-error: #ff6b8b; --spice-rgb-notification-error: 255,107,139;
+  --spice-misc: #8a7fa8;               --spice-rgb-misc: 138,127,168;
+}
+
+.encore-dark-theme,
+.encore-dark-theme .encore-base-set {
+  --background-base: #0f0a1e;
+  --background-highlight: #1d1533;
+  --background-press: #0a0614;
+  --background-elevated-base: #1c1432;
+  --background-elevated-highlight: #261c42;
+  --background-elevated-press: #150f27;
+  --background-tinted-base: var(--tint-2);
+  --background-tinted-highlight: var(--tint-3);
+  --background-tinted-press: rgba(230, 215, 255, .22);
+  --text-base: var(--ink);
+  --text-subdued: var(--ink-2);
+  --text-bright-accent: var(--accent);
+  --text-positive: var(--accent);
+  --essential-base: var(--ink);
+  --essential-subdued: #6f6690;
+  --essential-bright-accent: var(--accent);
+  --essential-positive: var(--accent);
+  --decorative-base: var(--ink);
+  --decorative-subdued: #2a2144;
+}
+
+.encore-dark-theme .encore-bright-accent-set {
+  --background-base: var(--accent);
+  --background-highlight: var(--accent-strong);
+  --background-press: color-mix(in oklab, var(--accent) 82%, #000);
+  --background-elevated-base: var(--accent-strong);
+  --background-elevated-highlight: var(--accent-strong);
+  --background-elevated-press: color-mix(in oklab, var(--accent) 82%, #000);
+  --background-tinted-base: var(--accent);
+  --background-tinted-highlight: var(--accent-strong);
+  --background-tinted-press: var(--accent);
+  --text-base: #0b0714;
+  --text-subdued: #0b0714;
+  --essential-base: #0b0714;
+}
+
+.Root__top-container {
+  --background-base: transparent;
+  --background-highlight: var(--tint-1);
+  --background-press: var(--tint-2);
+  --background-elevated-base: var(--tint-1);
+  --background-elevated-highlight: var(--tint-2);
+  --background-elevated-press: var(--tint-1);
+  --background-noise: none;
+}
+
+::selection { background: var(--accent-glow); color: #fff; }
+
+html {
+  background: var(--void) !important;
+}
+
+body,
+#main,
+.Root,
+.Root__top-container,
+.Root__globalNav,
+.Root__now-playing-bar {
+  background: transparent !important;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: -12%;
+  z-index: -2;
+  pointer-events: none;
+  background:
+    var(--np-image, linear-gradient(135deg, #2a0f55, #0d1a4a 55%, #3a0f3f))
+    center / cover no-repeat;
+  filter: blur(90px) saturate(1.5) brightness(.58);
+  opacity: .9;
+  transition: background-image 1.2s ease;
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: -8%;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .045 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"),
+
+    radial-gradient(120% 90% at 50% 45%, transparent 55%, rgba(4, 2, 10, .62) 100%),
+    linear-gradient(180deg, rgba(6, 3, 14, .38), transparent 35%, transparent 70%, rgba(6, 3, 14, .55)),
+
+    radial-gradient(1.2px 1.2px at 23px 41px,  rgba(255, 255, 255, .85), transparent),
+    radial-gradient(1px 1px     at 97px 13px,  rgba(233, 222, 255, .7),  transparent),
+    radial-gradient(1.4px 1.4px at 151px 173px, rgba(255, 255, 255, .9), transparent),
+    radial-gradient(1px 1px     at 61px 211px, rgba(214, 200, 255, .65), transparent),
+    radial-gradient(1.3px 1.3px at 283px 97px, rgba(255, 255, 255, .8),  transparent),
+    radial-gradient(1px 1px     at 197px 331px, rgba(255, 255, 255, .6), transparent),
+
+    radial-gradient(42% 38% at 22% 18%, var(--accent-glow), transparent 70%),
+    radial-gradient(38% 34% at 84% 24%, rgba(124, 58, 237, .30), transparent 70%),
+    radial-gradient(46% 40% at 72% 88%, rgba(59, 110, 246, .22), transparent 72%),
+    radial-gradient(40% 36% at 12% 86%, rgba(236, 72, 153, .18), transparent 70%);
+  background-size:
+    160px 160px,
+    100% 100%, 100% 100%,
+    149px 157px, 211px 199px, 263px 241px, 331px 307px, 389px 353px, 457px 419px,
+    100% 100%, 100% 100%, 100% 100%, 100% 100%;
+  background-repeat:
+    repeat,
+    no-repeat, no-repeat,
+    repeat, repeat, repeat, repeat, repeat, repeat,
+    no-repeat, no-repeat, no-repeat, no-repeat;
+  will-change: transform;
+  animation: nebula-drift 48s ease-in-out infinite alternate;
+}
+
+@keyframes nebula-drift {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to   { transform: translate3d(-2.5%, -1.5%, 0) scale(1.06); }
+}
+
+.Root__nav-bar,
+.Root__main-view,
+.Root__right-sidebar {
+  background-color: var(--glass) !important;
+  border-radius: var(--r-panel) !important;
+  box-shadow: var(--panel-edge), 0 18px 40px -12px rgba(0, 0, 0, .45);
+}
+
+.Root__main-view { isolation: isolate; }
+
+.main-yourLibraryX-libraryContainer,
+.main-yourLibraryX-libraryRootlist,
+.Root__right-sidebar-peek,
+.main-nowPlayingView-nowPlayingWidget {
+  background-color: transparent !important;
+}
+
+.Root__right-sidebar-overlay { background-color: var(--glass-strong); }
+
+.Root__main-view::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-repeat: no-repeat;
+  background-image:
+    radial-gradient(2px 2px at 9% 14%,  #fff,    transparent),
+    radial-gradient(2.4px 2.4px at 27% 61%, #eadfff, transparent),
+    radial-gradient(1.8px 1.8px at 41% 23%, #fff,    transparent),
+    radial-gradient(2.6px 2.6px at 58% 78%, #dccbff, transparent),
+    radial-gradient(2px 2px at 71% 9%,  #fff,    transparent),
+    radial-gradient(2.2px 2.2px at 86% 42%, #f1e8ff, transparent),
+    radial-gradient(1.8px 1.8px at 93% 83%, #fff,    transparent),
+    radial-gradient(2px 2px at 17% 91%, #e4d6ff, transparent);
+  opacity: .35;
+  animation: twinkle 6s ease-in-out infinite alternate;
+}
+
+@keyframes twinkle {
+  0%   { opacity: .25; }
+  60%  { opacity: .8; }
+  100% { opacity: .45; }
+}
+
+.Root__main-view::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: -1;
+  width: 180px;
+  height: 1.5px;
+  pointer-events: none;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, color-mix(in oklab, var(--accent) 55%, transparent) 65%, #fff);
+  box-shadow: 0 0 10px 1px var(--accent-glow);
+  opacity: 0;
+  will-change: transform, opacity;
+  animation: meteor 21s linear infinite 4s;
+}
+
+@keyframes meteor {
+  0%      { transform: translate3d(12vmin, -4vmin, 0) rotate(28deg); opacity: 0; }
+  .6%     { opacity: 1; }
+  4.5%    { transform: translate3d(72vmin, 28vmin, 0) rotate(28deg); opacity: 0; }
+  50%     { transform: translate3d(58vmin, -6vmin, 0) rotate(22deg); opacity: 0; }
+  50.6%   { opacity: .85; }
+  54%     { transform: translate3d(118vmin, 18vmin, 0) rotate(22deg); opacity: 0; }
+  100%    { transform: translate3d(118vmin, 18vmin, 0) rotate(22deg); opacity: 0; }
+}
+
+.Root__main-view .main-topBar-background {
+  background: rgba(12, 8, 26, .55) !important;
+  backdrop-filter: blur(24px) saturate(1.6);
+  box-shadow: inset 0 -1px 0 var(--hairline);
+}
+
+.Root__globalNav .main-globalNav-navLink {
+  background-color: var(--tint-1);
+  box-shadow: inset 0 0 0 1px var(--hairline);
+  transition: background-color .2s ease, transform .25s var(--ease-spring);
+}
+.Root__globalNav .main-globalNav-navLink:hover {
+  background-color: var(--tint-2);
+  transform: scale(1.05);
+}
+
+.main-topBar-searchBar {
+  background-color: var(--tint-1) !important;
+  box-shadow: inset 0 0 0 1px var(--hairline) !important;
+  transition: background-color .2s ease, box-shadow .2s ease !important;
+}
+.main-topBar-searchBar:hover {
+  background-color: var(--tint-2) !important;
+  box-shadow: inset 0 0 0 1px var(--hairline-2) !important;
+}
+.main-topBar-searchBar:focus {
+  background-color: var(--tint-2) !important;
+  box-shadow:
+    inset 0 0 0 1.5px var(--accent),
+    0 0 0 4px var(--accent-soft) !important;
+}
+
+.main-yourLibraryX-listItem > div {
+  border-radius: var(--r-item);
+}
+.main-yourLibraryX-listItem[aria-selected="true"] > div {
+  background-color: var(--accent-soft) !important;
+}
+
+.main-entityHeader-backgroundColor,
+.main-actionBarBackground-background {
+  background-image: none !important;
+  opacity: .55;
+  -webkit-mask-image: linear-gradient(to bottom, #000 20%, transparent);
+          mask-image: linear-gradient(to bottom, #000 20%, transparent);
+}
+
+.main-home-homeHeader {
+  background-image: linear-gradient(180deg, var(--accent-soft), transparent) !important;
+}
+
+.main-entityHeader-title,
+.main-entityHeader-title h1 {
+  letter-spacing: -.035em;
+  text-shadow: 0 2px 30px rgba(0, 0, 0, .35);
+}
+
+.main-entityHeader-image {
+  box-shadow: 0 24px 60px -12px rgba(0, 0, 0, .6), 0 0 0 1px var(--hairline);
+}
+
+.main-shelf-title {
+  letter-spacing: -.02em;
+}
+
+.main-card-card {
+  --card-image-radius: var(--r-art);
+  background: transparent !important;
+  border-radius: var(--r-panel);
+  transition:
+    background-color .25s ease,
+    box-shadow .25s ease,
+    transform .35s var(--ease-out) !important;
+}
+.main-card-card:hover,
+.main-card-card:focus-within,
+.main-card-card[data-context-menu-open="true"] {
+  background: var(--tint-1) !important;
+  box-shadow: inset 0 0 0 1px var(--hairline);
+  transform: translateY(-3px);
+}
+
+.main-cardImage-image {
+  border-radius: var(--card-image-radius, var(--r-art));
+}
+.main-cardImage-imageWrapper {
+  transition: box-shadow .35s ease;
+}
+.main-card-card:hover .main-cardImage-imageWrapper {
+  box-shadow: 0 16px 36px -10px rgba(0, 0, 0, .7), 0 0 28px -6px var(--accent-glow);
+}
+
+.main-playButton-PlayButton {
+  transition: filter .25s ease;
+}
+.main-playButton-PlayButton:hover {
+  filter: drop-shadow(0 6px 18px var(--accent-glow));
+}
+
+.main-trackList-trackListRow {
+  border-radius: var(--r-item);
+}
+.main-trackList-trackListRow:hover,
+.main-trackList-trackListRow:focus-within {
+  background-color: var(--tint-1);
+}
+[aria-selected="true"] > .main-trackList-trackListRow {
+  background-color: var(--accent-soft) !important;
+}
+
+.main-trackList-trackListHeader {
+  backdrop-filter: blur(24px) saturate(1.4);
+}
+
+.main-home-filterChipsSection {
+  backdrop-filter: blur(24px) saturate(1.4);
+}
+
+.main-nowPlayingBar-nowPlayingBar {
+  position: relative;
+  padding-inline: 8px 12px;
+  background-color: var(--glass-strong);
+  border-radius: var(--r-panel);
+  box-shadow: var(--panel-edge), 0 20px 50px -16px rgba(0, 0, 0, .7);
+}
+
+.main-nowPlayingBar-nowPlayingBar::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 14%;
+  right: 14%;
+  height: 1px;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  opacity: .75;
+}
+
+.main-nowPlayingWidget-coverArtContainer,
+.main-nowPlayingWidget-coverArt .main-image-image {
+  border-radius: 8px;
+}
+.main-nowPlayingWidget-coverArtContainer {
+  box-shadow: 0 6px 18px -4px rgba(0, 0, 0, .6);
+}
+
+.main-nowPlayingBar-nowPlayingBar .main-trackInfo-name {
+  font-weight: 600;
+}
+
+[data-testid="control-button-playpause"] {
+  transition: transform .25s var(--ease-spring), box-shadow .3s ease !important;
+}
+[data-testid="control-button-playpause"]:hover {
+  box-shadow: 0 0 0 5px var(--accent-soft), 0 8px 24px -4px var(--accent-glow);
+}
+
+.player-controls__buttons button:not([data-testid="control-button-playpause"]) {
+  transition: color .2s ease, transform .2s var(--ease-spring) !important;
+}
+.player-controls__buttons button:not([data-testid="control-button-playpause"]):active {
+  transform: scale(.9);
+}
+
+.playback-bar .progress-bar,
+.main-nowPlayingBar-volumeBar .progress-bar {
+  --bg-color: rgba(255, 255, 255, .14);
+  --mg-color: rgba(255, 255, 255, .3);
+  --fg-color: var(--ink);
+  --is-active-fg-color: var(--accent);
+}
+.playback-bar .progress-bar:hover .x-progressBar-fillColor,
+.main-nowPlayingBar-volumeBar .progress-bar:hover .x-progressBar-fillColor {
+  background-image: linear-gradient(90deg, color-mix(in oklab, var(--accent) 60%, transparent), var(--accent));
+}
+.progress-bar__slider {
+  background-color: #fff !important;
+  box-shadow: 0 0 0 4px var(--accent-soft), 0 2px 8px rgba(0, 0, 0, .5) !important;
+}
+
+.main-nowPlayingView-coverArtContainer,
+.main-nowPlayingView-coverArt img {
+  border-radius: 12px;
+}
+.main-nowPlayingView-coverArtContainer {
+  box-shadow: 0 24px 50px -14px rgba(0, 0, 0, .7), 0 0 40px -10px var(--accent-glow);
+}
+
+.main-nowPlayingView-section {
+  background-color: var(--tint-1) !important;
+  border-radius: 12px;
+  box-shadow: inset 0 0 0 1px var(--hairline);
+}
+
+.lyrics-lyrics-container {
+  --lyrics-color-background: transparent !important;
+  --lyrics-color-active: #fff !important;
+  --lyrics-color-inactive: rgba(244, 240, 255, .34) !important;
+  --lyrics-color-passed: rgba(244, 240, 255, .6) !important;
+}
+.lyrics-lyricsContent-lyric {
+  transition: color .35s ease, text-shadow .35s ease;
+}
+.lyrics-lyricsContent-active {
+  text-shadow: 0 0 28px var(--accent-glow);
+}
+
+.main-contextMenu-menu {
+  background-color: rgba(20, 14, 36, .8) !important;
+  backdrop-filter: blur(28px) saturate(1.7);
+  border-radius: 12px !important;
+  padding: 6px !important;
+  box-shadow:
+    inset 0 0 0 1px var(--hairline-2),
+    0 24px 48px -8px rgba(0, 0, 0, .6) !important;
+}
+.main-contextMenu-menuItemButton {
+  border-radius: 7px !important;
+}
+.main-contextMenu-menuItemButton:hover,
+.main-contextMenu-menuItemButton:focus,
+.main-contextMenu-menuItemButton[aria-expanded="true"] {
+  background-color: var(--tint-2) !important;
+}
+.main-contextMenu-menuItemButton[aria-checked="true"] {
+  color: var(--accent) !important;
+}
+
+.os-theme-spotify.os-scrollbar {
+  --os-size: 10px;
+  --os-padding-perpendicular: 3px;
+  --os-handle-border-radius: 999px;
+  --os-handle-bg: rgba(255, 255, 255, .14);
+  --os-handle-bg-hover: rgba(255, 255, 255, .28);
+  --os-handle-bg-active: var(--accent);
+}
+.os-theme-spotify .os-scrollbar-handle {
+  background: var(--os-handle-bg) !important;
+  border-radius: 999px !important;
+}
+.os-theme-spotify .os-scrollbar-handle:hover {
+  background: var(--os-handle-bg-hover) !important;
+}
+.os-theme-spotify .os-scrollbar-handle:active {
+  background: var(--os-handle-bg-active) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { transition: none; }
+  body::after,
+  .Root__main-view::before { animation: none; }
+  .Root__main-view::after { display: none; }
+  .main-card-card:hover,
+  .main-card-card:focus-within { transform: none; }
+}
