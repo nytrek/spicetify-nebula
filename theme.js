@@ -3,8 +3,9 @@
 // attributes on <html>, and adds the welcome screen, card tilt, settings and lyrics.
 (function nebula() {
   const root = document.documentElement;
-  // Tells the CSS the script is running; without it the UI is never hidden.
-  root.dataset.nebulaBoot = "";
+  // Loaded late (e.g. by the Marketplace, after the UI is already visible):
+  // skip the welcome instead of hiding a UI the user is already using.
+  const lateLoad = performance.now() > 6000;
 
   const safe = (name, fn) => {
     try { return fn(); } catch (err) { console.warn(`[Nebula] ${name} failed:`, err); }
@@ -208,8 +209,10 @@
     el.querySelector(".nw-greet").textContent = greeting();
     el.querySelector(".nw-name").textContent = name || "Nebula";
     document.body.append(el);
+    // The UI is hidden only while the welcome is on screen.
+    root.dataset.nebulaIntro = "";
     setTimeout(() => { root.dataset.nebulaReady = ""; }, 2200);
-    setTimeout(() => el.remove(), 3000);
+    setTimeout(() => { el.remove(); delete root.dataset.nebulaIntro; }, 3000);
   };
 
   const uiWaitStart = Date.now();
@@ -218,7 +221,7 @@
       setTimeout(waitForUi, 100);
       return;
     }
-    if (reduceMotion.matches || !settings.welcome) {
+    if (reduceMotion.matches || !settings.welcome || lateLoad) {
       root.dataset.nebulaReady = "";
       return;
     }
@@ -226,7 +229,7 @@
       document.addEventListener("visibilitychange", () => requestAnimationFrame(welcome), { once: true });
       return;
     }
-    requestAnimationFrame(welcome);
+    requestAnimationFrame(() => safe("welcome", welcome));
   })();
 
   // ---------- Shooting stars ----------
