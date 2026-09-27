@@ -737,7 +737,11 @@
           }));
           lines.forEach((l, i) => {
             const next = lines[i + 1]?.start ?? l.start + 6000;
-            l.end = Math.min(next - 80, l.start + Math.max(1400, l.text.length * 95 + 900));
+            // Instrumental breaks last until the next line; sung lines are capped
+            // because the rest until the next line is usually silence.
+            l.end = l.text
+              ? Math.min(next - 80, l.start + Math.max(1400, l.text.length * 95 + 900))
+              : next - 150;
             l.words = synced && l.text ? wordsOf(l.text, l.start, l.end, l.syllables) : [];
           });
           result = { synced, lines };
@@ -872,7 +876,15 @@
       const plain = (index) => {
         const el = els[index];
         const line = data?.lines[index];
-        if (el && line?.text && el.childElementCount) el.textContent = line.text;
+        if (!el || !line) return;
+        if (line.text) {
+          if (el.childElementCount) el.textContent = line.text;
+          return;
+        }
+        el.querySelectorAll("span").forEach((dot) => {
+          dot.classList.remove("is-now", "is-sung");
+          dot.style.removeProperty("--f");
+        });
       };
 
       const split = (index) => {
@@ -880,7 +892,14 @@
         cursor = 0;
         const line = data?.lines[index];
         const el = els[index];
-        if (!line || !el || !line.words.length || !karaokeOn()) return;
+        if (!line || !el || !karaokeOn()) return;
+        if (!line.text) {
+          const dots = [...el.querySelectorAll("span")];
+          const step = (line.end - line.start) / dots.length;
+          dots.forEach((dot, i) => units.push({ el: dot, word: el, start: line.start + step * i, end: line.start + step * (i + 1), last: false }));
+          return;
+        }
+        if (!line.words.length) return;
         const byLetter = settings.karaoke === "letter";
         el.textContent = "";
         line.words.forEach((w) => {

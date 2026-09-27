@@ -1651,11 +1651,32 @@ html[data-nebula-karaoke="off"] .nl-line.is-active {
   background: #fff;
   opacity: .35;
 }
-.nl-line.is-interlude.is-active span {
+html[data-nebula-karaoke="off"] .nl-line.is-interlude.is-active span {
   animation: nl-dot 1.4s ease-in-out infinite;
 }
-.nl-line.is-interlude.is-active span:nth-child(2) { animation-delay: .2s; }
-.nl-line.is-interlude.is-active span:nth-child(3) { animation-delay: .4s; }
+html[data-nebula-karaoke="off"] .nl-line.is-interlude.is-active span:nth-child(2) { animation-delay: .2s; }
+html[data-nebula-karaoke="off"] .nl-line.is-interlude.is-active span:nth-child(3) { animation-delay: .4s; }
+
+/* karaoke: each dot fills bottom-up during its share of the break, and the
+   group breathes like a loader */
+.nl-line.is-interlude.is-active {
+  animation: nl-breathe 2.4s ease-in-out infinite;
+}
+.nl-line.is-interlude span.is-now {
+  opacity: 1;
+  background: linear-gradient(to top, #fff var(--f, 0%), rgba(255, 255, 255, .28) var(--f, 0%));
+}
+.nl-line.is-interlude span.is-sung {
+  opacity: 1;
+  box-shadow: 0 0 12px rgba(255, 255, 255, .55);
+  transition: box-shadow .4s ease;
+}
+@keyframes nl-breathe {
+  50% { scale: 1.12; }
+}
+html[data-nebula-karaoke="off"] .nl-line.is-interlude.is-active {
+  animation: none;
+}
 @keyframes nl-dot {
   50% { opacity: 1; }
 }
@@ -1691,7 +1712,10 @@ html[data-nebula-karaoke="off"] .nl-line.is-active {
 
 .nl-word {
   display: inline-block;
-  transition: translate .4s cubic-bezier(.22, 1, .36, 1), scale .5s cubic-bezier(.22, 1, .36, 1);
+  transition:
+    translate .4s cubic-bezier(.22, 1, .36, 1),
+    scale .5s cubic-bezier(.22, 1, .36, 1),
+    margin .5s cubic-bezier(.22, 1, .36, 1);
   transform-origin: center 70%;
 }
 /* background-clip: text is unreliable on inline elements inside composited layers. */
@@ -1715,8 +1739,10 @@ html[data-nebula-karaoke="off"] .nl-line.is-active {
 .nl-word:has(.is-sung) {
   translate: 0 -3px;
 }
+/* scale does not reflow, so the held word also gets room on both sides */
 .nl-word.is-held.is-singing {
-  scale: 1.1;
+  scale: 1.07;
+  margin-inline: .14em;
 }
 .nl-word.is-held .nl-ch.is-sung {
   text-shadow: 0 0 26px rgba(255, 255, 255, .75);
@@ -2203,6 +2229,7 @@ html[data-nebula-calm][data-nebula-ready] :is(.Root__globalNav, .Root__nav-bar, 
 html[data-nebula-calm] #nebula-lyrics,
 html[data-nebula-calm] #nebula-lyrics.is-leaving,
 html[data-nebula-calm] .nl-line.is-interlude.is-active span,
+html[data-nebula-calm] .nl-line.is-interlude.is-active,
 html[data-nebula-calm][data-nebula-bg="dynamic"] :is(body, .Root, .Root__main-view)::before,
 html[data-nebula-calm][data-nebula-bg="dynamic"] body::after,
 html[data-nebula-calm][data-nebula-fx="full"] .main-nowPlayingBar-nowPlayingBar::after {
