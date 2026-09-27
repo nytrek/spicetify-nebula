@@ -864,6 +864,9 @@
       let manualTimer = 0;
       let units = [];      // [{ el, start, end, word }]
       let cursor = 0;
+      // Estimated word ends are approximate, so the zoom lasts until the next
+      // word actually starts (or the line changes), not until the fill ends.
+      let singing = null;
 
       const place = () => {
         if (!els.length) return;
@@ -890,6 +893,7 @@
       const split = (index) => {
         units = [];
         cursor = 0;
+        singing = null;
         const line = data?.lines[index];
         const el = els[index];
         if (!line || !el || !karaokeOn()) return;
@@ -946,13 +950,16 @@
           u.el.classList.remove("is-now");
           u.el.style.removeProperty("--f");
           u.el.classList.add("is-sung");
-          if (u.last) u.word.classList.remove("is-singing");
           cursor++;
         }
         const u = units[cursor];
         if (!u || pos < u.start) return;
+        if (u.word !== singing) {
+          singing?.classList.remove("is-singing");
+          singing = u.word;
+          singing.classList.add("is-singing");
+        }
         u.el.classList.add("is-now");
-        u.word.classList.add("is-singing");
         u.el.style.setProperty("--f", `${Math.round(((pos - u.start) / (u.end - u.start)) * 100)}%`);
       };
 
