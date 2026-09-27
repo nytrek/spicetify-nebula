@@ -123,28 +123,28 @@ Open your **profile menu → Nebula settings**. Changes apply instantly and are 
 | | Tone | Normal · Dark · OLED | Normal |
 | Home | Welcome | On · Off | On |
 | | Home header | On · Off | On |
-| Background | Background | Static · Dynamic | Static |
+| Background | Background | Static · Dynamic | Dynamic |
 | | Shooting stars | On · Off | On |
-| | Extra effects | On · Off | Off |
+| | Extra effects | On · Off | On |
 | Right panel | Now playing | Cover + ring · Video / canvas | Cover + ring |
 | | Lyrics in right panel | On · Off | On |
 | Lyrics | Nebula lyrics | On · Off | On |
 | | Karaoke | By letter · By word · Off | By letter |
 
-**Dynamic** background brings back the moving cover, breathing aurora and twinkling stars. **Extra effects** adds a breathing halo under the player, a spinning progress ring and a slow zoom on artist photos. Both look best with a dedicated GPU.
+Everything is on by default. **Dynamic** background adds the moving cover, breathing aurora and twinkling stars, and **Extra effects** adds a breathing halo under the player, a spinning progress ring and a slow zoom on artist photos. On older or low-power machines, set Background to *Static* and turn Extra effects off.
 
 <br>
 
 ## Performance
 
-Nebula was profiled inside Spotify with Chromium traces, and its defaults are tuned for integrated graphics:
+Nebula was profiled inside Spotify with Chromium traces:
 
 - **No live full-screen blur.** The cover arrives already blurred at 64 px and the browser upscales it.
 - **Almost nothing loops.** A running `transform` animation makes Spotify recompute hundreds of `IntersectionObserver`s every frame, so shooting stars only animate while they fly.
 - **Karaoke runs only while lyrics are visible and music is playing**, driven by a clock that never rewinds.
 - **Fixes a Spotify bug** where a hidden loading spinner spins forever and keeps the main thread busy while idle.
 
-When paused, the theme uses no measurable CPU. Everything heavier is opt-in through the settings.
+The heavier effects (Dynamic background, Extra effects) can be turned off in the settings for low-power machines.
 
 <br>
 

@@ -4,7 +4,7 @@
 (function nebula() {
   const root = document.documentElement;
   // Loaded late (e.g. by the Marketplace, after the UI is already visible):
-  // skip the welcome instead of hiding a UI the user is already using.
+  // the welcome then covers the screen itself instead of hiding the panels.
   const lateLoad = performance.now() > 6000;
 
   const safe = (name, fn) => {
@@ -116,8 +116,8 @@
     tone: "normal",      // "normal" | "dark" | "black"
     welcome: true,
     homeHero: true,
-    bg: "static",        // "static" | "dynamic"
-    fx: "lite",          // "lite" | "full" (extra effects)
+    bg: "dynamic",       // "static" | "dynamic"
+    fx: "full",          // "lite" | "full" (extra effects)
     meteors: true,
     npv: "ring",         // "ring" | "video"
     lyrics: true,        // Nebula lyrics instead of Spotify's
@@ -202,6 +202,7 @@
     const name = await displayName();
     const el = document.createElement("div");
     el.id = "nebula-welcome";
+    if (lateLoad) el.classList.add("is-cover");
     el.lang = spotifyLocale();
     el.dir = "auto";
     el.style.cssText = "position:fixed;inset:0;pointer-events:none";
@@ -210,7 +211,7 @@
     el.querySelector(".nw-name").textContent = name || "Nebula";
     document.body.append(el);
     // The UI is hidden only while the welcome is on screen.
-    root.dataset.nebulaIntro = "";
+    if (!lateLoad) root.dataset.nebulaIntro = "";
     setTimeout(() => { root.dataset.nebulaReady = ""; }, 2200);
     setTimeout(() => { el.remove(); delete root.dataset.nebulaIntro; }, 3000);
   };
@@ -221,7 +222,7 @@
       setTimeout(waitForUi, 100);
       return;
     }
-    if (reduceMotion.matches || !settings.welcome || lateLoad) {
+    if (reduceMotion.matches || !settings.welcome) {
       root.dataset.nebulaReady = "";
       return;
     }
@@ -667,13 +668,23 @@
       if (cache.has(uri)) return cache.get(uri);
       const id = uri?.split(":")[2];
       if (!id || !uri.startsWith("spotify:track:")) return null;
+      const url = `https://spclient.wg.spotify.com/color-lyrics/v2/track/${id}?format=json&vocalRemoval=false&market=from_token`;
+      // The desktop clients differ in which headers they accept, so try both.
+      let res = null;
+      let failed = true;
+      for (const headers of [undefined, { "app-platform": "WebPlayer" }]) {
+        try {
+          res = await S.CosmosAsync.get(url, null, headers);
+          failed = false;
+          if (res?.lyrics) break;
+        } catch (err) {
+          // 404 means the track has no lyrics; anything else is worth retrying later.
+          if (err?.status === 404 || /404/.test(String(err?.message ?? err))) failed = false;
+          else console.warn("[Nebula] lyrics request failed:", err);
+        }
+      }
       let result = null;
-      try {
-        const res = await S.CosmosAsync.get(
-          `https://spclient.wg.spotify.com/color-lyrics/v2/track/${id}?format=json&vocalRemoval=false&market=from_token`,
-          null,
-          { "app-platform": "WebPlayer" }
-        );
+      {
         const raw = res?.lyrics;
         if (raw?.lines?.length) {
           const synced = raw.syncType !== "UNSYNCED";
@@ -689,8 +700,8 @@
           });
           result = { synced, lines };
         }
-      } catch {}
-      cache.set(uri, result);
+      }
+      if (!failed) cache.set(uri, result);
       return result;
     };
 

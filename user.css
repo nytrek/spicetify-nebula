@@ -1175,6 +1175,13 @@ html[data-nebula-intro]:not([data-nebula-ready]) :is(.Root__globalNav, .Root__na
   background: radial-gradient(70% 60% at 50% 50%, rgba(3, 3, 6, .35), rgba(3, 3, 6, .75));
   animation: welcome-out .7s var(--ease-out) 2.2s forwards;
 }
+/* Late load: the welcome hides the already visible UI with its own backdrop. */
+#nebula-welcome.is-cover {
+  background:
+    radial-gradient(70% 60% at 50% 50%, rgba(8, 8, 14, .62), rgba(3, 3, 6, .9)),
+    var(--np-ambient, var(--void)) center / cover no-repeat;
+}
+
 #nebula-welcome .nw-greet {
   color: var(--ink-2);
   font-size: 13px;
