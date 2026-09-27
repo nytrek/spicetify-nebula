@@ -295,7 +295,11 @@
   (function boot() {
     const S = window.Spicetify;
     // Player.data only exists once something has played, so it is not required here.
-    if (!S?.Player?.addEventListener || !S.Platform) {
+    // On some platforms this script runs before Spicetify has loaded React and
+    // the player, so wait until everything used below exists.
+    const ready = S?.Player?.addEventListener && S.Platform && S.CosmosAsync &&
+      S.React && S.ReactJSX?.jsx && S.Menu?.Item && S.PopupModal?.display;
+    if (!ready) {
       setTimeout(boot, 300);
       return;
     }
@@ -307,7 +311,12 @@
         if (tries < 120) setTimeout(() => registerSettings(tries + 1), 500);
         return;
       }
-      safe("settings menu", () => new S.Menu.Item(t("settings"), false, () => openSettings(S)).register());
+      try {
+        new S.Menu.Item(t("settings"), false, () => openSettings(S)).register();
+      } catch (err) {
+        if (tries < 120) setTimeout(() => registerSettings(tries + 1), 500);
+        else console.warn("[Nebula] settings menu failed:", err);
+      }
     })();
     document.addEventListener("keydown", (e) => {
       if (e.ctrlKey && e.altKey && e.key.toLowerCase() === "n" && S.PopupModal?.display) {
@@ -317,6 +326,9 @@
     });
 
     const setVar = (name, value) => value && root.style.setProperty(name, value);
+    // The player getters throw until playback state exists.
+    const playerPos = () => { try { return S.Player.getProgress() || 0; } catch { return 0; } };
+    const playerDur = () => { try { return S.Player.getDuration() || 0; } catch { return 0; } };
 
     const toUrl = (uri) =>
       uri?.startsWith("spotify:image:") ? "https://i.scdn.co/image/" + uri.slice(14) : uri || "";
@@ -422,8 +434,8 @@
     safe("home header", () => createHomeHero(S));
 
     // --- Lyrics and Now Playing panel
-    const hero = safe("now playing", () => createNowPlaying(S, { imageOf, t }));
-    const lyrics = hero && safe("lyrics", () => createLyrics(S, { imageOf, t, fullFx, settings, settingListeners, hero }));
+    const hero = safe("now playing", () => createNowPlaying(S, { imageOf, t, playerPos, playerDur }));
+    const lyrics = hero && safe("lyrics", () => createLyrics(S, { imageOf, t, settings, settingListeners, hero, playerPos, playerDur }));
 
     // Capture phase, before React handles Spotify's own lyrics button.
     document.addEventListener("click", (e) => {
@@ -545,7 +557,7 @@
   }
 
   // ---------- Now Playing panel ----------
-  function createNowPlaying(S, { imageOf, t }) {
+  function createNowPlaying(S, { imageOf, t, playerPos, playerDur }) {
     const el = document.createElement("section");
     el.className = "nebula-np";
     el.innerHTML = `
@@ -576,8 +588,8 @@
     };
     const progress = () => {
       if (!el.isConnected) return;
-      const dur = S.Player.getDuration() || 1;
-      const p = Math.min(S.Player.getProgress() / dur, 1);
+      const dur = (playerDur() || 1);
+      const p = Math.min(playerPos() / dur, 1);
       wave.style.strokeDashoffset = (100 - p * 100).toFixed(2);
     };
 
@@ -593,7 +605,7 @@
   }
 
   // ---------- Lyrics ----------
-  function createLyrics(S, { imageOf, t, settings, settingListeners, hero }) {
+  function createLyrics(S, { imageOf, t, settings, settingListeners, hero, playerPos, playerDur }) {
     const cache = new Map();
     const visibility = [];
     const views = new Set();
@@ -607,7 +619,7 @@
     const clock = { pos: 0, at: 0, shown: 0 };
     const paused = () => !!S.Player.data?.isPaused;
     const resync = (hard) => {
-      const p = S.Player.getProgress();
+      const p = playerPos();
       clock.pos = p;
       clock.at = performance.now();
       if (hard) clock.shown = p;
@@ -744,7 +756,7 @@
 
     const onProgress = () => {
       if (!views.size) return;
-      const p = S.Player.getProgress();
+      const p = playerPos();
       views.forEach((v) => v.progress?.(p));
       const est = clock.pos + (paused() ? 0 : performance.now() - clock.at);
       if (Math.abs(p - est) > 1200) { resync(true); views.forEach((v) => v.reset()); run(); }
@@ -1012,7 +1024,7 @@
         },
         playState,
         progress(pos) {
-          const dur = S.Player.getDuration() || 1;
+          const dur = (playerDur() || 1);
           q(".nl-progress-fill").style.transform = `scaleX(${Math.min(pos / dur, 1).toFixed(4)})`;
         },
       };
