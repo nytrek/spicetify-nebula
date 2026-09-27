@@ -2102,6 +2102,81 @@ html[data-nebula-lyrics] [data-testid="lyrics-button"] {
   #nebula-lyrics .nl-stage::after { grid-area: 1 / 1; }
 }
 
+/* ---------- Appearance: tone and Aurora v1 style ---------- */
+html[data-nebula-tone="dark"] {
+  --cover-strength: .5;
+  --glass: rgba(5, 5, 8, .62);
+  --glass-strong: rgba(8, 8, 12, .84);
+}
+html[data-nebula-tone="dark"] body::after {
+  opacity: .72;
+}
+
+html[data-nebula-tone="black"] {
+  --void: #000;
+  --cover-strength: 0;
+  --glass: rgba(0, 0, 0, .55);
+  --glass-strong: rgba(0, 0, 0, .9);
+}
+html[data-nebula-tone="black"] body::after {
+  opacity: .3;
+}
+
+html[data-nebula-style="aurora"] {
+  --glass: rgba(24, 12, 46, .36);
+  --glass-strong: rgba(26, 13, 50, .7);
+  --tint-1: rgba(181, 123, 242, .1);
+  --tint-2: rgba(181, 123, 242, .18);
+  --tint-3: rgba(181, 123, 242, .26);
+  --hairline: rgba(181, 123, 242, .16);
+  --hairline-2: rgba(216, 180, 254, .28);
+  --ui-accent: #e2ccff;
+  --glow: color-mix(in oklab, var(--np-accent) 55%, #b57bf2);
+}
+html[data-nebula-style="aurora"] .Root::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(60% 55% at 18% 22%, rgba(124, 58, 237, .32), transparent 60%),
+    radial-gradient(55% 50% at 82% 30%, rgba(59, 130, 246, .2), transparent 62%),
+    radial-gradient(60% 60% at 60% 92%, rgba(236, 72, 153, .18), transparent 60%);
+  mix-blend-mode: screen;
+}
+html[data-nebula-style="aurora"] :is(.encore-text-headline-large, .main-entityHeader-title h1, .nhh-name) {
+  color: transparent;
+  background: linear-gradient(90deg, #fff, #e2ccff 55%, color-mix(in oklab, var(--np-accent) 60%, #d8b4fe));
+  -webkit-background-clip: text;
+          background-clip: text;
+  text-shadow: none;
+}
+html[data-nebula-style="aurora"] .main-nowPlayingBar-nowPlayingBar::before {
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #7c3aed, var(--np-accent), #e9d5ff, var(--np-accent), #7c3aed) 0 0 / 240% 100%;
+  animation: sheen 8s linear infinite;
+}
+@keyframes sheen {
+  to { background-position: 240% 0; }
+}
+html[data-nebula-style="aurora"] .main-nowPlayingWidget-coverArtContainer {
+  animation: art-pulse 4.5s ease-in-out infinite;
+}
+@keyframes art-pulse {
+  50% { box-shadow: 0 0 30px rgba(216, 180, 254, .6); }
+}
+html[data-nebula-style="aurora"] :is(.main-card-card, .main-card-cardContainer):hover {
+  transform: translateY(-8px) !important;
+  box-shadow: inset 0 0 0 1px var(--hairline-2), 0 22px 50px -12px rgba(60, 20, 120, .65), 0 0 30px -6px rgba(181, 123, 242, .45);
+}
+html[data-nebula-style="aurora"][data-np-state="paused"] .main-nowPlayingBar-nowPlayingBar::before,
+html[data-nebula-style="aurora"][data-np-state="paused"] .main-nowPlayingWidget-coverArtContainer {
+  animation-play-state: paused;
+}
+
 /* ---------- Reduced motion ---------- */
 @media (prefers-reduced-motion: reduce) {
   .playback-bar .x-progressBar-fillColor::before,
@@ -2123,6 +2198,8 @@ html[data-nebula-lyrics] [data-testid="lyrics-button"] {
   .nl-line { transition: opacity .2s ease !important; }
   .nl-word { transition: none !important; translate: none !important; scale: none !important; }
   .nebula-ring { animation: none !important; }
+  html[data-nebula-style="aurora"] .main-nowPlayingBar-nowPlayingBar::before,
+  html[data-nebula-style="aurora"] .main-nowPlayingWidget-coverArtContainer { animation: none; }
   .Root__main-view::after { display: none; }
   :is(.main-card-card, .main-card-cardContainer):hover,
   :is(.main-card-card, .main-card-cardContainer):focus-within,
