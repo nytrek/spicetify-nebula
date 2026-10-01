@@ -301,15 +301,16 @@
   document.addEventListener("pointerleave", () => { releaseCard(); card = null; });
 
   // ---------- Spicetify-dependent setup ----------
-  (function boot() {
+  (function boot(tries = 0) {
     const S = window.Spicetify;
     // Player.data only exists once something has played, so it is not required here.
-    // On some platforms this script runs before Spicetify has loaded React and
-    // the player, so wait until everything used below exists.
-    const ready = S?.Player?.addEventListener && S.Platform && S.CosmosAsync &&
-      S.React && S.ReactJSX?.jsx && S.Menu?.Item && S.PopupModal?.display;
-    if (!ready) {
-      setTimeout(boot, 300);
+    // On some platforms this script runs before Spicetify has loaded the player,
+    // so wait for it. Only the player and platform are required: everything
+    // else (menus, modal, CosmosAsync) is optional and checked where it is used,
+    // so a Spotify update that drops one of them can't stop the whole theme.
+    if (!S?.Player?.addEventListener || !S.Platform) {
+      if (tries === 60) console.warn("[Nebula] still waiting for Spicetify.Player / Spicetify.Platform");
+      setTimeout(() => boot(tries + 1), 300);
       return;
     }
 
@@ -714,7 +715,7 @@
     };
     // Fallback for clients without RequestBuilder.
     const cosmosLyrics = (id) =>
-      S.CosmosAsync.get(`${LYRICS_HOST}/track/${id}?format=json&vocalRemoval=false&market=from_token`, null, { "app-platform": "WebPlayer" });
+      S.CosmosAsync?.get(`${LYRICS_HOST}/track/${id}?format=json&vocalRemoval=false&market=from_token`, null, { "app-platform": "WebPlayer" });
 
     const fetchLyrics = async (item) => {
       const uri = item?.uri;
