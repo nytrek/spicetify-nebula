@@ -535,15 +535,19 @@
       const { svg } = ring();
       el.querySelector(".nhh-avatar").prepend(svg);
       el.querySelector(".nhh-greet").textContent = greeting();
-      try {
-        const user = await S.Platform.UserAPI.getUser();
+      const show = (user) => {
         el.querySelector(".nhh-name").textContent = user?.displayName || user?.username || "";
         const images = user?.images ?? [];
         const best = images.reduce((a, b) => ((b?.width ?? 0) > (a?.width ?? 0) ? b : a), images[0]);
         if (best?.url) el.querySelector(".nhh-avatar img").src = best.url;
-        else el.classList.add("no-avatar");
+        el.classList.toggle("no-avatar", !best?.url);
+      };
+      // initialUser is there right away; UserAPI can take a few seconds on 1.3+.
+      if (S.Platform.initialUser) show(S.Platform.initialUser);
+      try {
+        show(await S.Platform.UserAPI.getUser());
       } catch {
-        el.classList.add("no-avatar");
+        if (!S.Platform.initialUser) el.classList.add("no-avatar");
       }
     };
 
@@ -553,7 +557,8 @@
         el?.remove();
         return;
       }
-      const home = document.querySelector('[data-testid="home-page"] .main-home-content');
+      const home = document.querySelector('[data-testid="home-page"] .main-home-content') ||
+        document.querySelector('[data-testid="home-page"] > .contentSpacing');
       if (!home) return;
       if (el?.isConnected && el.parentElement === home) return;
       if (!el) build();

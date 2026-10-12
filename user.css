@@ -417,13 +417,23 @@ html[data-nebula-meteor="b"] .Root__main-view::after { animation: meteor-b 1.2s 
 .main-home-homeHeader {
   background-image: linear-gradient(180deg, var(--glow-soft), transparent) !important;
 }
+/* Spotify 1.3+ lifts the shortcuts above the shelves with order: -1. */
+.nebula-home-hero {
+  order: -2;
+}
+/* Spotify 1.3+ dropped the mapped names; the cover-colored band is the div
+   next to the page that Spotify paints with an inline background-color. */
+:has(> [data-testid="home-page"]) > div[style*="background-color"] {
+  background: linear-gradient(180deg, var(--glow-soft), transparent) !important;
+}
 
 .main-home-filterChipsContainer,
 .main-home-filterChipsSection {
   background: transparent !important;
 }
 
-.view-homeShortcutsGrid-shortcut {
+.view-homeShortcutsGrid-shortcut,
+[data-testid="home-page"] > .contentSpacing > section:nth-child(1 of :not(.nebula-home-hero)) div:has(> [draggable="true"]) {
   background-color: var(--tint-1) !important;
   border-radius: var(--r-card) !important;
   box-shadow: inset 0 0 0 1px var(--hairline);
@@ -431,7 +441,8 @@ html[data-nebula-meteor="b"] .Root__main-view::after { animation: meteor-b 1.2s 
 }
 .view-homeShortcutsGrid-shortcut:hover,
 .view-homeShortcutsGrid-shortcut:focus-within,
-.view-homeShortcutsGrid-shortcut[data-context-menu-open="true"] {
+.view-homeShortcutsGrid-shortcut[data-context-menu-open="true"],
+[data-testid="home-page"] > .contentSpacing > section:nth-child(1 of :not(.nebula-home-hero)) div:has(> [draggable="true"]):is(:hover, :focus-within) {
   background-color: var(--tint-2) !important;
   box-shadow: inset 0 0 0 1px var(--hairline-2), 0 14px 30px -12px rgba(0, 0, 0, .6);
   transform: translateY(-2px);
@@ -880,6 +891,7 @@ html[data-np-state="paused"] #full-app-display #fad-progress-inner::before {
 
 /* ---------- Menus, popovers, tooltips and modals ---------- */
 .main-contextMenu-menu,
+#context-menu > ul[role="menu"],
 [data-encore-id="popover"],
 .tippy-box[data-theme~="device-picker"] {
   background-color: var(--glass-menu) !important;
@@ -889,23 +901,28 @@ html[data-np-state="paused"] #full-app-display #fad-progress-inner::before {
     inset 0 0 0 1px var(--hairline-2),
     0 24px 48px -8px rgba(0, 0, 0, .6) !important;
 }
-.main-contextMenu-menu {
+.main-contextMenu-menu,
+#context-menu > ul[role="menu"] {
   padding: 6px !important;
 }
-.main-contextMenu-menuItemButton {
+.main-contextMenu-menuItemButton,
+#context-menu [role="menuitem"] {
   border-radius: 8px !important;
 }
 .main-contextMenu-menuItemButton:hover,
 .main-contextMenu-menuItemButton:focus,
-.main-contextMenu-menuItemButton[aria-expanded="true"] {
+.main-contextMenu-menuItemButton[aria-expanded="true"],
+#context-menu [role="menuitem"]:is(:hover, :focus, [aria-expanded="true"]) {
   background-color: var(--tint-2) !important;
 }
-.main-contextMenu-menuItemButton[aria-checked="true"] {
+.main-contextMenu-menuItemButton[aria-checked="true"],
+#context-menu [role="menuitem"][aria-checked="true"] {
   color: #fff !important;
   font-weight: 600;
 }
 
 .main-contextMenu-menu,
+#context-menu > ul[role="menu"],
 [data-encore-id="popover"] {
   animation: menu-in .12s var(--ease-out);
 }
@@ -1270,6 +1287,18 @@ html[data-nebula-ready] .Root__now-playing-bar { animation: app-in .7s var(--eas
 }
 .playlist-playlist-actionBarBackground-background {
   background: none !important;
+}
+/* Spotify 1.3+: the header photo and color live in .before-scroll-node,
+   marked only by data-testid (the mapped class names are gone). */
+.before-scroll-node [data-testid="background-image"],
+.before-scroll-node [data-testid="background-image"] + div {
+  -webkit-mask-image: linear-gradient(to bottom, #000 45%, transparent 98%);
+          mask-image: linear-gradient(to bottom, #000 45%, transparent 98%);
+}
+.before-scroll-node [data-testid="overscroll-background"] {
+  opacity: .5;
+  -webkit-mask-image: linear-gradient(to bottom, #000, transparent 420px);
+          mask-image: linear-gradient(to bottom, #000, transparent 420px);
 }
 .main-entityHeader-withBackgroundImage .main-entityHeader-title h1 {
   text-shadow: 0 4px 40px rgba(0, 0, 0, .55);
@@ -2265,5 +2294,6 @@ html[data-nebula-calm] .Root__main-view::after { display: none;
 }
 html[data-nebula-calm] :is(.main-card-card, .main-card-cardContainer):hover,
 html[data-nebula-calm] :is(.main-card-card, .main-card-cardContainer):focus-within,
-html[data-nebula-calm] .view-homeShortcutsGrid-shortcut:hover { transform: none;
+html[data-nebula-calm] .view-homeShortcutsGrid-shortcut:hover,
+html[data-nebula-calm] [data-testid="home-page"] > .contentSpacing > section:nth-child(1 of :not(.nebula-home-hero)) div:has(> [draggable="true"]):hover { transform: none;
 }
