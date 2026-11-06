@@ -445,7 +445,9 @@
 
     // --- Lyrics and Now Playing panel
     const hero = safe("now playing", () => createNowPlaying(S, { imageOf, t, playerPos, playerDur }));
-    const lyrics = hero && safe("lyrics", () => createLyrics(S, { imageOf, t, settings, settingListeners, hero, playerPos, playerDur }));
+    // Lyrics must not depend on the ring: if the panel breaks on a new Spotify,
+    // full-screen lyrics still replace the native ones.
+    const lyrics = safe("lyrics", () => createLyrics(S, { imageOf, t, settings, settingListeners, hero, playerPos, playerDur }));
 
     // Capture phase, before React handles Spotify's own lyrics button.
     document.addEventListener("click", (e) => {
@@ -455,6 +457,21 @@
       e.stopPropagation();
       lyrics.toggle();
     }, true);
+
+    // Anything else that opens Spotify's own lyrics page (the right panel's
+    // expand button, shortcuts) goes to Nebula lyrics instead.
+    // Spotify swaps its History object during startup, so listen once the UI is up.
+    (function redirectLyrics(tries = 0) {
+      if (!document.querySelector(".Root__main-view") || !S.Platform.History?.listen) {
+        if (tries < 120) setTimeout(() => redirectLyrics(tries + 1), 500);
+        return;
+      }
+      S.Platform.History.listen((location) => {
+        if (!settings.lyrics || !lyrics || location?.pathname !== "/lyrics") return;
+        S.Platform.History.goBack();
+        lyrics.open();
+      });
+    })();
   })();
 
   function openSettings(S) {
@@ -1111,12 +1128,13 @@
 
       const mount = () => {
         frameId = 0;
-        const widget = document.querySelector(".Root__right-sidebar .main-nowPlayingView-nowPlayingWidget");
+        const widget = document.querySelector(".Root__right-sidebar .main-nowPlayingView-nowPlayingWidget") ||
+          document.querySelector('.Root__right-sidebar [data-testid="NPV_Panel_OpenDiv"] > div:first-child');
         if (!widget) {
           delete root.dataset.nebulaNpv;
           return;
         }
-        const useHero = settings.npv === "ring";
+        const useHero = !!hero && settings.npv === "ring";
         const showLyrics = settings.lyrics && settings.panelLyrics;
 
         if (useHero) {
@@ -1128,7 +1146,7 @@
           }
         } else {
           delete root.dataset.nebulaNpv;
-          if (hero.el.isConnected) hero.el.remove();
+          if (hero?.el.isConnected) hero.el.remove();
         }
 
         if (!showLyrics) {
@@ -1149,6 +1167,7 @@
 
     return {
       toggle: () => (full ? closeFull() : openFull()),
+      open: () => { if (!full) openFull(); },
       onVisibility: (fn) => visibility.push(fn),
     };
   }
